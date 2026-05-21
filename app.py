@@ -9,9 +9,21 @@ st.set_page_config(
 )
 
 
-# Custom clear logic that resets all file systems natively
+# Custom clear logic that completely wipes all text, files, and audio sessions
 def reset_interface():
+    # Clear the text area input variable
     st.session_state["text_input"] = ""
+
+    # Force-clear the file uploader and microphone widgets by changing their memory keys
+    if "uploader_key" not in st.session_state:
+        st.session_state["uploader_key"] = 0
+    st.session_state["uploader_key"] += 1
+
+    if "audio_key" not in st.session_state:
+        st.session_state["audio_key"] = 0
+    st.session_state["audio_key"] += 1
+
+    # Rerun the app to draw a completely blank canvas
     st.rerun()
 
 
@@ -33,15 +45,23 @@ user_message = st.text_area(
     placeholder="Example: Your bank account is locked! Click this link immediately to verify..."
 )
 
-# 📸 METHOD 2: DRAG & DROP ATTACHMENTS/PHOTOS
+# Initialize dynamic keys in session state if they don't exist yet
+if "uploader_key" not in st.session_state:
+    st.session_state["uploader_key"] = 0
+if "audio_key" not in st.session_state:
+    st.session_state["audio_key"] = 0
+
+# 📸 METHOD 2: DRAG & DROP ATTACHMENTS/PHOTOS (With dynamic key tracking)
 uploaded_file = st.file_uploader(
     "📸 Option 2: Drag & drop a photo of a physical letter, screenshot, or bill:",
-    type=["png", "jpg", "jpeg", "pdf"]
+    type=["png", "jpg", "jpeg", "pdf"],
+    key=f"file_uploader_{st.session_state['uploader_key']}"
 )
 
-# 🗣️ METHOD 3: VOICE MEMO AUDIO INPUT
+# 🗣️ METHOD 3: VOICE MEMO AUDIO INPUT (With dynamic key tracking)
 voice_audio = st.audio_input(
-    "🗣️ Option 3: Press the microphone to record yourself describing a phone call you received:"
+    "🗣️ Option 3: Press the microphone to record yourself describing a phone call you received:",
+    key=f"audio_input_{st.session_state['audio_key']}"
 )
 
 st.markdown("---")
