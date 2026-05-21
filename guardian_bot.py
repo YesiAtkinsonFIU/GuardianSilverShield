@@ -1,5 +1,6 @@
 import os
 from google import genai
+from google.genai import types  # Added for strict data type validation
 from pymongo import MongoClient
 
 # LOCAL FALLBACK CACHE
@@ -25,7 +26,7 @@ def analyze_multimodal_message(user_text=None, uploaded_file=None, voice_audio=N
     print("🛡️ Guardian Core active. Scanning inputs for signs of coercion...")
 
     try:
-        # Initialize Gemini Engine securely via the unified standard client object
+        # Initialize Gemini Engine securely
         ai_client = genai.Client()
 
         # Determine the safety protocol context based on text hint
@@ -54,14 +55,20 @@ def analyze_multimodal_message(user_text=None, uploaded_file=None, voice_audio=N
             contents_payload.append(f"User Written Account: {user_text}")
 
         if uploaded_file:
-            # Format file data directly for Gemini's multimodal window
-            file_data = {"mime_type": uploaded_file.type, "data": uploaded_file.read()}
-            contents_payload.append(file_data)
+            # Wrap the file bytes in the official types.Part.from_bytes constructor
+            file_part = types.Part.from_bytes(
+                data=uploaded_file.read(),
+                mime_type=uploaded_file.type,
+            )
+            contents_payload.append(file_part)
 
         if voice_audio:
-            # Format voice memo audio data directly for Gemini
-            audio_data = {"mime_type": voice_audio.type, "data": voice_audio.read()}
-            contents_payload.append(audio_data)
+            # Wrap the audio bytes in the official types.Part.from_bytes constructor
+            audio_part = types.Part.from_bytes(
+                data=voice_audio.read(),
+                mime_type=voice_audio.type,
+            )
+            contents_payload.append(audio_part)
 
         # Execute Multimodal Content Generation
         response = ai_client.models.generate_content(
