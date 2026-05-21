@@ -90,3 +90,13 @@ if scan_clicked:
         st.markdown("### 📋 Guardian Safety Assessment")
         st.info(analysis_result)
         st.success("✅ Assessment complete. Remember: when in doubt, hang up, delete, or ask a trusted loved one!")
+
+        st.markdown("---")
+        # High-contrast, clean professional branding footer
+        st.markdown(
+            "<div style='text-align: center; color: #888888; font-size: 0.85rem; padding-top: 10px;'>"
+            "🛡️ Guardian: The Silver Shield™ is a proprietary solution developed by <b>BYse Ventures LLC</b>.<br>"
+            "Created for the ITWomen AI for Good Challenge | © 2026 All Rights Reserved."
+            "</div>",
+            unsafe_html=True
+        )
