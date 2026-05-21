@@ -3,8 +3,6 @@ from google import genai
 from pymongo import MongoClient
 
 # LOCAL FALLBACK CACHE
-# In case the local home network router continues to block the direct MongoDB DNS lookup port,
-# this cache ensures your app functions perfectly during development and presentations!
 LOCAL_DATABASE_FALLBACK = {
     "Grandparent Scam": "In a grandparent scam, an emergency imposter calls claiming a grandchild is in urgent financial or legal trouble. Guardian Protocol: Instruct the user to hang up immediately and call the grandchild directly on their known, trusted number to verify. Never wire funds, send gift cards, or provide cryptocurrency tokens under high-pressure scenarios.",
     "Phishing and Spoofing Links": "Phishing text messages or emails mimic official banks, delivery services, or utility agencies to steal credentials. Guardian Protocol: Look for mismatched URLs, urgent warnings about accounts being closed, or unusual payment requests. Do not click links. Navigate to the official provider website via a clean browser window instead.",
@@ -12,94 +10,63 @@ LOCAL_DATABASE_FALLBACK = {
 }
 
 
-def get_vector_embedding(text, ai_client):
-    """Generate the mathematical vector embedding for incoming text."""
-    try:
-        response = ai_client.models.embed_content(
-            model="gemini-embedding-001",
-            contents=text
-        )
-        return response.embeddings[0].values
-    except Exception as e:
-        print(f"⚠️ Vector generation fallback active. Error: {e}")
-        return None
-
-
-def fetch_safety_protocol(user_input, ai_client):
-    """Attempt to search MongoDB Atlas for the matching protocol, fallback if blocked."""
-    print("🔍 Searching cloud database for matching safety protocols...")
-
-    # 1. Try connecting to the cloud database
-    try:
-        # Standard fallback link that safely handles local DNS hiccups
-        mongo_client = MongoClient(
-            "mongodb+srv://guardian_admin:Z4Y6PZuGXkya9RXY@thesilvershield.pxjtclo.mongodb.net/guardian_db?retryWrites=true&w=majority",
-            serverSelectionTimeoutMS=3000  # Give up quickly if the local router blocks it
-        )
-        db = mongo_client["guardian_db"]
-        collection = db["safety_knowledge"]
-
-        # Pull the embedding math to find the matching context
-        query_vector = get_vector_embedding(user_input, ai_client)
-
-        if query_vector:
-            # Simple keyword scan fallback if Atlas Vector Indexes aren't built yet
-            for key in LOCAL_DATABASE_FALLBACK.keys():
-                if any(word in user_input.lower() for word in key.lower().split()):
-                    doc = collection.find_one({"topic": key})
-                    if doc:
-                        print(f"✅ Cloud Protocol Secured: Found matching rules for '{key}'")
-                        return doc["content"]
-
-        # Default query if no direct vector index match is hit
-        doc = collection.find_one({"topic": "Grandparent Scam"})
-        if doc:
-            return doc["content"]
-
-    except Exception as network_error:
-        print(f"⚠️ Cloud lookup restricted by local router network port. Activating secure local failover...")
-
-    # 2. Smart Fallback Execution: Keep developing regardless of network limits!
-    user_input_lower = user_input.lower()
-    if "grandson" in user_input_lower or "arrested" in user_input_lower or "bail" in user_input_lower:
-        print("✅ Failover Protocol Secured: Found matching rules for 'Grandparent Scam'")
+def fetch_safety_protocol(user_text_hint):
+    """Fallback keyword scanner for protocol matching."""
+    user_input_lower = user_text_hint.lower() if user_text_hint else ""
+    if any(word in user_input_lower for word in ["grandson", "grandchild", "arrested", "bail", "nieto"]):
         return LOCAL_DATABASE_FALLBACK["Grandparent Scam"]
-    elif "link" in user_input_lower or "click" in user_input_lower or "bank" in user_input_lower:
-        print("✅ Failover Protocol Secured: Found matching rules for 'Phishing and Spoofing Links'")
+    elif any(word in user_input_lower for word in ["link", "click", "bank", "banco", "locked", "clique", "lien"]):
         return LOCAL_DATABASE_FALLBACK["Phishing and Spoofing Links"]
     else:
-        print("✅ Failover Protocol Secured: Found matching rules for 'Remote Access Scams'")
         return LOCAL_DATABASE_FALLBACK["Remote Access Scams"]
 
 
-def analyze_message_with_context(user_input):
-    print("🛡️ Guardian Core active. Scanning input for signs of coercion...")
+def analyze_multimodal_message(user_text=None, uploaded_file=None, voice_audio=None):
+    print("🛡️ Guardian Core active. Scanning inputs for signs of coercion...")
 
     try:
-        # Initialize Gemini Engine
-        # ⚠️ Replace with your real API key string (ending in ...HdMQ)
-        # Initialize Gemini Engine securely using your machine's environment setup
+        # Initialize Gemini Engine securely via the unified standard client object
         ai_client = genai.Client()
 
-        # Dynamic context extraction from our vector knowledge base
-        safety_protocol = fetch_safety_protocol(user_input, ai_client)
+        # Determine the safety protocol context based on text hint
+        safety_protocol = fetch_safety_protocol(user_text)
 
+        # SYSTEM INSTRUCTIONS: Setting the core tri-lingual persona and formatting behaviors
         system_instruction = (
             "You are Guardian, a gentle, empathetic, and deeply protective AI companion "
-            "designed to shield senior citizens from fraud, scams, and high-pressure manipulation. "
-            "When evaluating a message, always remain calm and reassuring. Speak directly to the user. "
-            "Use the provided safety protocol context to construct your specific instructions. "
+            "designed to shield senior citizens from fraud, scams, and high-pressure manipulation.\n\n"
+            "LANGUAGE RULES FOR TRI-COUNTY SOUTH FLORIDA (Miami-Dade, Broward, Palm Beach):\n"
+            "1. Detect the primary language used in the input (English, Spanish, or Haitian Creole).\n"
+            "2. Respond to the user natively in that exact language (English, Spanish, or Kreyòl).\n"
+            "3. Maintain your warm, comforting, and reassuring persona flawlessly across all three languages.\n\n"
+            "RESPONSE FORMAT:\n"
+            "Always speak directly to the user. Deconstruct the high-pressure scam tactics simply. "
             "Explicitly tell them what actions to take in a bold, clean, step-by-step format."
         )
 
-        prompt = (
-            f"Contextual Safety Rules to enforce:\n{safety_protocol}\n\n"
-            f"Analyze this situation/message and provide clear guidance: '{user_input}'"
-        )
+        # Build the payload contents list dynamically for the multimodal model
+        contents_payload = [
+            f"Contextual Safety Rules to enforce:\n{safety_protocol}\n\n",
+            "Analyze this situation and provide clear guidance."
+        ]
 
+        if user_text:
+            contents_payload.append(f"User Written Account: {user_text}")
+
+        if uploaded_file:
+            # Format file data directly for Gemini's multimodal window
+            file_data = {"mime_type": uploaded_file.type, "data": uploaded_file.read()}
+            contents_payload.append(file_data)
+
+        if voice_audio:
+            # Format voice memo audio data directly for Gemini
+            audio_data = {"mime_type": voice_audio.type, "data": voice_audio.read()}
+            contents_payload.append(audio_data)
+
+        # Execute Multimodal Content Generation
         response = ai_client.models.generate_content(
             model="gemini-2.5-flash",
-            contents=prompt,
+            contents=contents_payload,
             config={"system_instruction": system_instruction}
         )
 
@@ -107,19 +74,3 @@ def analyze_message_with_context(user_input):
 
     except Exception as e:
         return f"❌ Analysis interrupted. Error: {e}"
-
-
-if __name__ == "__main__":
-    # Test text: Feel free to change this text to try out other scams!
-    test_message = (
-        "Your bank account has been locked due to suspicious activity. "
-        "Click here immediately to reset your passcode: http://secure-bank-login-update.com"
-    )
-
-    print(f"Incoming User Report:\n\"{test_message}\"\n")
-    print("-" * 50)
-
-    guardian_response = analyze_message_with_context(test_message)
-
-    print("\nGUARDIAN OUTPUT:")
-    print(guardian_response)
