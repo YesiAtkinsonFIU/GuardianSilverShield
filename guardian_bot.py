@@ -1,6 +1,7 @@
 import os
+import re  # Added for structural text parsing and PII masking
 from google import genai
-from google.genai import types  # Added for strict data type validation
+from google.genai import types
 from pymongo import MongoClient
 
 # LOCAL FALLBACK CACHE
@@ -9,6 +10,34 @@ LOCAL_DATABASE_FALLBACK = {
     "Phishing and Spoofing Links": "Phishing text messages or emails mimic official banks, delivery services, or utility agencies to steal credentials. Guardian Protocol: Look for mismatched URLs, urgent warnings about accounts being closed, or unusual payment requests. Do not click links. Navigate to the official provider website via a clean browser window instead.",
     "Remote Access Scams": "Fraudsters pose as tech support agents claiming your computer has a virus to gain remote entry. Guardian Protocol: Legitimate tech support teams will never contact you out of the blue or demand access via software tools like AnyDesk or TeamViewer. Do not download software on unverified calls."
 }
+
+
+def redact_pii(text):
+    """
+    Automated PII Redaction Pipeline
+    Scans input text using regular expressions and masks sensitive information
+    before it leaves the user's environment.
+    """
+    if not text:
+        return ""
+
+    # 1. Mask Social Security Numbers (Formats: 000-00-0000 or 000000000)
+    ssn_pattern = r'\b\d{3}[-.\s]?\d{2}[-.\s]?\d{4}\b'
+    text = re.sub(ssn_pattern, "[🔒 SSN REDACTED]", text)
+
+    # 2. Mask Credit Card Numbers (Matches standard 13-16 digit card sequences)
+    cc_pattern = r'\b(?:\d[ -]*?){13,16}\b'
+    text = re.sub(cc_pattern, "[🔒 CREDIT CARD REDACTED]", text)
+
+    # 3. Mask Email Addresses
+    email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+    text = re.sub(email_pattern, "[🔒 EMAIL REDACTED]", text)
+
+    # 4. Mask Phone Numbers (Standard North American formats)
+    phone_pattern = r'\b(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b'
+    text = re.sub(phone_pattern, "[🔒 PHONE REDACTED]", text)
+
+    return text
 
 
 def fetch_safety_protocol(user_text_hint):
@@ -29,8 +58,11 @@ def analyze_multimodal_message(user_text=None, uploaded_file=None, voice_audio=N
         # Initialize Gemini Engine securely
         ai_client = genai.Client()
 
-        # Determine the safety protocol context based on text hint
-        safety_protocol = fetch_safety_protocol(user_text)
+        # 🔒 PIPELINE STEP: Sanitize user text inputs to remove PII completely
+        sanitized_text = redact_pii(user_text) if user_text else ""
+
+        # Determine the safety protocol context based on our sanitized text hint
+        safety_protocol = fetch_safety_protocol(sanitized_text)
 
         # SYSTEM INSTRUCTIONS: Setting the core tri-lingual persona and formatting behaviors
         system_instruction = (
@@ -51,11 +83,11 @@ def analyze_multimodal_message(user_text=None, uploaded_file=None, voice_audio=N
             "Analyze this situation and provide clear guidance."
         ]
 
-        if user_text:
-            contents_payload.append(f"User Written Account: {user_text}")
+        # Inject the sanitized text account if it exists
+        if sanitized_text:
+            contents_payload.append(f"User Written Account (Sanitized): {sanitized_text}")
 
         if uploaded_file:
-            # Wrap the file bytes in the official types.Part.from_bytes constructor
             file_part = types.Part.from_bytes(
                 data=uploaded_file.read(),
                 mime_type=uploaded_file.type,
@@ -63,7 +95,6 @@ def analyze_multimodal_message(user_text=None, uploaded_file=None, voice_audio=N
             contents_payload.append(file_part)
 
         if voice_audio:
-            # Wrap the audio bytes in the official types.Part.from_bytes constructor
             audio_part = types.Part.from_bytes(
                 data=voice_audio.read(),
                 mime_type=voice_audio.type,

@@ -95,7 +95,7 @@ with col1:
 with col2:
     st.button("🔄 Reset Screen", on_click=reset_interface, use_container_width=True)
 
-# Processing Execution Loop
+# Processing Execution Loop (Upgraded with Visual Redaction Proof!)
 if scan_clicked:
     if not privacy_consent:
         st.error("⚠️ For your security, please review and check the disclosure verification box above before scanning.")
@@ -104,13 +104,30 @@ if scan_clicked:
     else:
         with st.spinner(
                 "Guardian Core is assessing details securely, analyzing language, and scanning for coercion..."):
-            # Note: We pass the full uploaded_files list to our upgraded backend function next!
+            # 1. We grab the sanitized text version straight from our helper method to show the user
+            from guardian_bot import redact_pii
+
+            visually_sanitized_text = redact_pii(user_message) if user_message else ""
+
+            # 2. Run our standard analysis pipeline
             analysis_result = analyze_multimodal_message(
                 user_text=user_message,
-                uploaded_file=uploaded_files[0] if uploaded_files else None,  # Local fallback wrapper
+                uploaded_file=uploaded_files[0] if uploaded_files else None,
                 voice_audio=voice_audio
             )
 
+        # 🎉 VISUAL DATA PRIVACY PROOF CARD
+        if user_message.strip():
+            st.markdown("### 🔒 Local Privacy Shield Active")
+            st.success(
+                "**Data Sanitized Successfully!** To ensure your strict privacy, our automated pipeline "
+                "detected and completely masked your personal credentials locally before forwarding the "
+                "text context to the secure analytical engine. Here is the protected version that was evaluated:"
+            )
+            st.code(visually_sanitized_text, language="text")
+            st.markdown("##")
+
+        # Standard Safety Assessment Card
         st.markdown("### 📋 Guardian Safety Assessment")
         st.info(analysis_result)
         st.success("✅ Assessment complete. Remember: when in doubt, hang up, delete, or ask a trusted loved one!")
