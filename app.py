@@ -114,11 +114,12 @@ if scan_clicked:
 
             visually_sanitized_text = redact_pii(user_message) if user_message else ""
 
+            # 🎉 UPDATED: Passing the full list directly to the loop processor
             analysis_result = analyze_multimodal_message(
                 user_text=user_message,
-                uploaded_file=uploaded_files[0] if uploaded_files else None,
+                uploaded_files=uploaded_files if uploaded_files else None,  # Clean array transfer
                 voice_audio=voice_audio,
-                session_id=st.session_state["user_session_id"]  # Pass anonymous token tracking
+                session_id=st.session_state["user_session_id"]
             )
 
         if user_message.strip():

@@ -1,6 +1,5 @@
 import os
 import re
-import uuid  # Added for generating anonymous session tokens
 from google import genai
 from google.genai import types
 from pymongo import MongoClient
@@ -40,11 +39,7 @@ def fetch_safety_protocol(user_text_hint):
 
 
 def log_to_mongodb(session_id, sanitized_text, classification):
-    """
-    Dual-Collection Privacy Engine
-    1. active_sessions: Store purgeable session logs.
-    2. global_telemetry: Store 100% de-identified threat patterns for AI learning.
-    """
+    """Dual-Collection Privacy Engine"""
     mongo_uri = os.environ.get("MONGO_URI")
     if not mongo_uri:
         print("⚠️ MongoDB URI missing. Simulating database write locally.")
@@ -54,14 +49,12 @@ def log_to_mongodb(session_id, sanitized_text, classification):
         client = MongoClient(mongo_uri, serverSelectionTimeoutMS=2000)
         db = client["guardian_shield_db"]
 
-        # Collection 1: Active Purgeable Session Data
         db.active_sessions.insert_one({
             "session_id": session_id,
             "status": "active",
             "has_text_payload": bool(sanitized_text)
         })
 
-        # Collection 2: Global Learning Telemetry (NO session mapping, completely anonymized)
         if sanitized_text:
             db.global_telemetry.insert_one({
                 "threat_context": sanitized_text,
@@ -74,7 +67,7 @@ def log_to_mongodb(session_id, sanitized_text, classification):
 
 
 def purge_session_from_db(session_id):
-    """Wipes active session footprints completely to fulfill GDPR mandates."""
+    """Wipes active session footprints completely."""
     mongo_uri = os.environ.get("MONGO_URI")
     if not mongo_uri:
         print("🔄 Local session cache simulation cleared successfully.")
@@ -82,7 +75,6 @@ def purge_session_from_db(session_id):
     try:
         client = MongoClient(mongo_uri)
         db = client["guardian_shield_db"]
-        # Permanently delete the specific user session document
         db.active_sessions.delete_many({"session_id": session_id})
         print(f"🔒 GDPR Compliance: Session {session_id} permanently purged.")
         return True
@@ -91,7 +83,8 @@ def purge_session_from_db(session_id):
         return False
 
 
-def analyze_multimodal_message(user_text=None, uploaded_file=None, voice_audio=None, session_id=None):
+def analyze_multimodal_message(user_text=None, uploaded_files=None, voice_audio=None, session_id=None):
+    """Upgraded to securely process multiple files simultaneously!"""
     print("🛡️ Guardian Core active. Scanning inputs for signs of coercion...")
 
     try:
@@ -118,9 +111,16 @@ def analyze_multimodal_message(user_text=None, uploaded_file=None, voice_audio=N
 
         if sanitized_text:
             contents_payload.append(f"User Written Account (Sanitized): {sanitized_text}")
-        if uploaded_file:
-            file_part = types.Part.from_bytes(data=uploaded_file.read(), mime_type=uploaded_file.type)
-            contents_payload.append(file_part)
+
+        # 🎉 UPGRADE: Loop through and attach all uploaded files to the AI request payload
+        if uploaded_files:
+            for file in uploaded_files:
+                file_part = types.Part.from_bytes(
+                    data=file.read(),
+                    mime_type=file.type
+                )
+                contents_payload.append(file_part)
+
         if voice_audio:
             audio_part = types.Part.from_bytes(data=voice_audio.read(), mime_type=voice_audio.type)
             contents_payload.append(audio_part)
@@ -131,9 +131,7 @@ def analyze_multimodal_message(user_text=None, uploaded_file=None, voice_audio=N
             config={"system_instruction": system_instruction}
         )
 
-        # Securely pass telemetry data to our database layer
         log_to_mongodb(session_id, sanitized_text, "Inferred Threat Scan")
-
         return response.text
 
     except Exception as e:
