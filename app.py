@@ -1,5 +1,6 @@
 import streamlit as st
-from guardian_bot import analyze_multimodal_message
+import uuid
+from guardian_bot import analyze_multimodal_message, purge_session_from_db
 
 # Configure the web browser tab title and layout
 st.set_page_config(
@@ -8,9 +9,19 @@ st.set_page_config(
     layout="centered"
 )
 
+# Initialize a persistent, unique anonymous user session token if it doesn't exist
+if "user_session_id" not in st.session_state:
+    st.session_state["user_session_id"] = str(uuid.uuid4())
+
 
 # Custom clear logic that completely wipes all text, files, and audio sessions
 def reset_interface():
+    # 🔒 GDPR MANDATE COMPLIANCE STEP: Trigger an immediate database wipe for the session
+    purge_session_from_db(st.session_state["user_session_id"])
+
+    # Generate a brand-new session token for the next transaction
+    st.session_state["user_session_id"] = str(uuid.uuid4())
+
     st.session_state["text_input"] = ""
     if "uploader_key" not in st.session_state:
         st.session_state["uploader_key"] = 0
@@ -25,7 +36,6 @@ def reset_interface():
 st.title("🛡️ Guardian: The Silver Shield")
 st.markdown("### *Your Compassionate Protector in a Digital World*")
 
-# Warm, educational welcoming card to eliminate "scam" feel
 st.info(
     "👋 **Welcome, friend!** Guardian is a community-focused safety space designed to "
     "help you break down confusing, stressful, or high-pressure messages. "
@@ -33,7 +43,6 @@ st.info(
     "we are here to look at it with you and keep you safe. **Your privacy is completely protected.**"
 )
 
-# 📖 HOW IT WORKS ACCORDION (Builds transparency and trust)
 with st.expander("🔍 See how Guardian safely checks your messages:"):
     st.markdown(
         "1. **Share Safely:** Share the suspicious message using whichever option below is easiest for you.\n"
@@ -53,17 +62,16 @@ user_message = st.text_area(
     placeholder="Example: Your bank account is locked! Click this link immediately to verify..."
 )
 
-# Initialize dynamic keys in session state if they don't exist yet
 if "uploader_key" not in st.session_state:
     st.session_state["uploader_key"] = 0
 if "audio_key" not in st.session_state:
     st.session_state["audio_key"] = 0
 
-# 📸 METHOD 2: DRAG & DROP ATTACHMENTS/PHOTOS (Upgraded to handle multiple files!)
+# 📸 METHOD 2: DRAG & DROP ATTACHMENTS
 uploaded_files = st.file_uploader(
     "📸 Option 2: Drag & drop (or paste) photos of a physical letter, screenshot, or bill:",
     type=["png", "jpg", "jpeg", "pdf"],
-    accept_multiple_files=True,  # 🎉 Feature Added: Multiple files supported
+    accept_multiple_files=True,
     key=f"file_uploader_{st.session_state['uploader_key']}"
 )
 
@@ -75,7 +83,7 @@ voice_audio = st.audio_input(
 
 st.markdown("---")
 
-# 📋 DISCLOSURE AND PRIVACY CONSENT CHECKBOX (Item 5)
+# 📋 DISCLOSURE AND PRIVACY CONSENT CHECKBOX
 st.write("#### 🔒 Final Safety Verification")
 privacy_consent = st.checkbox(
     "I understand that Guardian will analyze this document securely. "
@@ -85,17 +93,15 @@ privacy_consent = st.checkbox(
 
 st.markdown("##")
 
-# Layout: Create side-by-side buttons using columns
 col1, col2 = st.columns([3, 1])
 
 with col1:
-    # Button altered to a calm, trust-centered Primary color rather than alarming red
     scan_clicked = st.button("🛡️ Run Secure Guardian Scan", use_container_width=True, type="primary")
 
 with col2:
     st.button("🔄 Reset Screen", on_click=reset_interface, use_container_width=True)
 
-# Processing Execution Loop (Upgraded with Visual Redaction Proof!)
+# Processing Execution Loop
 if scan_clicked:
     if not privacy_consent:
         st.error("⚠️ For your security, please review and check the disclosure verification box above before scanning.")
@@ -104,19 +110,17 @@ if scan_clicked:
     else:
         with st.spinner(
                 "Guardian Core is assessing details securely, analyzing language, and scanning for coercion..."):
-            # 1. We grab the sanitized text version straight from our helper method to show the user
             from guardian_bot import redact_pii
 
             visually_sanitized_text = redact_pii(user_message) if user_message else ""
 
-            # 2. Run our standard analysis pipeline
             analysis_result = analyze_multimodal_message(
                 user_text=user_message,
                 uploaded_file=uploaded_files[0] if uploaded_files else None,
-                voice_audio=voice_audio
+                voice_audio=voice_audio,
+                session_id=st.session_state["user_session_id"]  # Pass anonymous token tracking
             )
 
-        # 🎉 VISUAL DATA PRIVACY PROOF CARD
         if user_message.strip():
             st.markdown("### 🔒 Local Privacy Shield Active")
             st.success(
@@ -127,12 +131,10 @@ if scan_clicked:
             st.code(visually_sanitized_text, language="text")
             st.markdown("##")
 
-        # Standard Safety Assessment Card
         st.markdown("### 📋 Guardian Safety Assessment")
         st.info(analysis_result)
         st.success("✅ Assessment complete. Remember: when in doubt, hang up, delete, or ask a trusted loved one!")
 
-# 🏢 PROPRIETARY FOOTER BRANDING FOR BYse VENTURES LLC
 st.markdown("---")
 st.markdown(
     "<div style='text-align: center; color: #888888; font-size: 0.85rem; padding-top: 10px;'>"
