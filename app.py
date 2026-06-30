@@ -9,12 +9,18 @@ st.set_page_config(
     layout="centered"
 )
 
-# Initialize a persistent, unique anonymous user session token if it doesn't exist
+# Initialize persistent tracking keys across state updates
 if "user_session_id" not in st.session_state:
     st.session_state["user_session_id"] = str(uuid.uuid4())
+if "uploader_key" not in st.session_state:
+    st.session_state["uploader_key"] = 0
+if "camera_key" not in st.session_state:
+    st.session_state["camera_key"] = 0
+if "audio_key" not in st.session_state:
+    st.session_state["audio_key"] = 0
 
 
-# Custom clear logic that completely wipes all text, files, and audio sessions
+# Custom clear logic that completely wipes all text, files, camera, and audio sessions
 def reset_interface():
     # 🔒 GDPR MANDATE COMPLIANCE STEP: Trigger an immediate database wipe for the session
     purge_session_from_db(st.session_state["user_session_id"])
@@ -22,12 +28,10 @@ def reset_interface():
     # Generate a brand-new session token for the next transaction
     st.session_state["user_session_id"] = str(uuid.uuid4())
 
+    # Reset widget tracking state tokens to force absolute DOM redraws
     st.session_state["text_input"] = ""
-    if "uploader_key" not in st.session_state:
-        st.session_state["uploader_key"] = 0
     st.session_state["uploader_key"] += 1
-    if "audio_key" not in st.session_state:
-        st.session_state["audio_key"] = 0
+    st.session_state["camera_key"] += 1
     st.session_state["audio_key"] += 1
     st.rerun()
 
@@ -62,11 +66,6 @@ user_message = st.text_area(
     placeholder="Example: Your bank account is locked! Click this link immediately to verify..."
 )
 
-if "uploader_key" not in st.session_state:
-    st.session_state["uploader_key"] = 0
-if "audio_key" not in st.session_state:
-    st.session_state["audio_key"] = 0
-
 # 📸 METHOD 2: DRAG & DROP ATTACHMENTS
 uploaded_files = st.file_uploader(
     "📸 Option 2: Drag & drop (or paste) photos of a physical letter, screenshot, or bill:",
@@ -75,9 +74,15 @@ uploaded_files = st.file_uploader(
     key=f"file_uploader_{st.session_state['uploader_key']}"
 )
 
-# 🗣️ METHOD 3: VOICE MEMO AUDIO INPUT
+# 📸 NEW METHOD 3: LIVE DEVICE CAMERA SNAPSHOT
+live_camera_photo = st.camera_input(
+    "📷 Option 3: Or point your device camera to take a picture of a physical letter or document right now:",
+    key=f"camera_input_{st.session_state['camera_key']}"
+)
+
+# 🗣️ METHOD 4: VOICE MEMO AUDIO INPUT
 voice_audio = st.audio_input(
-    "🗣️ Option 3: Press the microphone to record yourself describing a phone call you received:",
+    "🗣️ Option 4: Press the microphone to record yourself describing a phone call you received:",
     key=f"audio_input_{st.session_state['audio_key']}"
 )
 
@@ -105,7 +110,7 @@ with col2:
 if scan_clicked:
     if not privacy_consent:
         st.error("⚠️ For your security, please review and check the disclosure verification box above before scanning.")
-    elif not user_message.strip() and not uploaded_files and not voice_audio:
+    elif not user_message.strip() and not uploaded_files and not live_camera_photo and not voice_audio:
         st.warning("⚠️ Please provide information using at least one of the options above so Guardian can scan it.")
     else:
         with st.spinner(
@@ -114,10 +119,16 @@ if scan_clicked:
 
             visually_sanitized_text = redact_pii(user_message) if user_message else ""
 
-            # 🎉 UPDATED: Passing the full list directly to the loop processor
+            # 📦 MULTIMODAL BUNDLING ACCUMULATOR
+            all_assets = []
+            if uploaded_files:
+                all_assets.extend(uploaded_files)
+            if live_camera_photo:
+                all_assets.append(live_camera_photo)
+
             analysis_result = analyze_multimodal_message(
                 user_text=user_message,
-                uploaded_files=uploaded_files if uploaded_files else None,  # Clean array transfer
+                uploaded_files=all_assets if all_assets else None,
                 voice_audio=voice_audio,
                 session_id=st.session_state["user_session_id"]
             )
