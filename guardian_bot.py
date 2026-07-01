@@ -1,8 +1,14 @@
 import os
 import re
+import io
 from google import genai
 from google.genai import types
 from pymongo import MongoClient
+from PIL import Image
+from pillow_heif import register_heif_opener
+
+# ✨ Register the HEIF opener globally at startup so Pillow natively reads Apple HEIC images
+register_heif_opener()
 
 # LOCAL FALLBACK CACHE
 LOCAL_DATABASE_FALLBACK = {
@@ -84,7 +90,7 @@ def purge_session_from_db(session_id):
 
 
 def analyze_multimodal_message(user_text=None, uploaded_files=None, voice_audio=None, session_id=None):
-    """Upgraded to securely process multiple files simultaneously!"""
+    """Upgraded to securely process multiple files simultaneously and intercept raw iOS HEIC formats!"""
     print("🛡️ Guardian Core active. Scanning inputs for signs of coercion...")
 
     try:
@@ -112,12 +118,28 @@ def analyze_multimodal_message(user_text=None, uploaded_files=None, voice_audio=
         if sanitized_text:
             contents_payload.append(f"User Written Account (Sanitized): {sanitized_text}")
 
-        # 🎉 UPGRADE: Loop through and attach all uploaded files to the AI request payload
+        # 🎉 UPGRADE: Loop through, process, and attach all uploaded assets/photos
         if uploaded_files:
             for file in uploaded_files:
+                file_name = file.name.lower()
+
+                # 🍏 Intercept iPhone HEIC/HEIF files and translate them to a standard JPEG payload
+                if file_name.endswith('.heic') or file_name.endswith('.heif'):
+                    heic_image = Image.open(file)
+                    bytes_io = io.BytesIO()
+                    heic_image.convert("RGB").save(bytes_io, format="JPEG")
+                    bytes_io.seek(0)
+
+                    file_data = bytes_io.getvalue()
+                    mime_type = "image/jpeg"
+                else:
+                    # Treat standard formats (PNG, JPG, PDF) normally
+                    file_data = file.read()
+                    mime_type = file.type
+
                 file_part = types.Part.from_bytes(
-                    data=file.read(),
-                    mime_type=file.type
+                    data=file_data,
+                    mime_type=mime_type
                 )
                 contents_payload.append(file_part)
 

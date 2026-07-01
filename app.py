@@ -69,7 +69,7 @@ user_message = st.text_area(
 # 📸 METHOD 2: DRAG & DROP ATTACHMENTS
 uploaded_files = st.file_uploader(
     "📸 Option 2: Drag & drop (or paste) photos of a physical letter, screenshot, or bill:",
-    type=["png", "jpg", "jpeg", "pdf"],
+    type=["png", "jpg", "jpeg", "pdf", "heic", "heif"],  # ✨ Added HEIC/HEIF support
     accept_multiple_files=True,
     key=f"file_uploader_{st.session_state['uploader_key']}"
 )
