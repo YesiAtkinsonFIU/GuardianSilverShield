@@ -29,7 +29,13 @@ Guardian is built around five core engineering pillars to ensure absolute reliab
                                             [ Empathetic Step-by-Step UI ]
 
 ```
+### 🍏 Cross-Platform Media Ingestion (iOS Integration)
+* **Native HEIC/HEIF Image Processing:** Integrated the `pillow-heif` abstraction layer into the backend ingestion pipeline. The application now intercepts proprietary Apple iPhone image formats, instantly converting them to standard high-fidelity JPEG memory byte streams in transit before delivery to the `gemini-2.5-flash` model. This eliminates format friction for mobile users scanning physical documents.
 
+### 🌐 Enterprise Cloud Deployment & Network Topography
+* **Production Domain Mapping:** Transitioned from a default platform sandbox to a dedicated, branded web property at `guardiansilvershield.com`.
+* **Cryptographic Edge Redirection:** Deployed an automated, full-screen asset canvas frame leveraging Cloudflare's global edge network.
+* **Hardware Permissions Passthrough:** Implemented strict browser security access flags (`allow="camera; microphone;"`) directly within the routing container layer to ensure frictionless, cross-domain hardware handshake compliance for live scanning and voice recording.
 ### 1. Multimodal Edge Ingestion Layer
 
 Seniors interact with scams across fragmented communication channels. Guardian removes mechanical friction by supporting parallel multi-class asset streaming:
