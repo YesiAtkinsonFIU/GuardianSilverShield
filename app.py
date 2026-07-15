@@ -147,6 +147,50 @@ if scan_clicked:
         st.info(analysis_result)
         st.success("✅ Assessment complete. Remember: when in doubt, hang up, delete, or ask a trusted loved one!")
 
+# 🛡️ SHARE & ACTION SUITE
+st.markdown("---")
+st.subheader("👥 Share This Resolution for Support")
+st.write("Keep your loved ones or caregivers informed. Use the options below to share Guardian's safety protocols.")
+
+col1, col2 = st.columns(2)
+
+with col1:
+    # 🖨️ NATIVE PRINT BUTTON
+    if st.button("🖨️ Print Protocols / Save as PDF", use_container_width=True):
+        # Injects a tiny automated snippet into the browser window to trigger the print modal
+        st.markdown(
+            "<script>window.print();</script>",
+            unsafe_allow_code=True
+        )
+
+with col2:
+    # 📩 EMAIL SHARE INTERFACE
+    caregiver_email = st.text_input(
+        "Caregiver Email Address",
+        placeholder="example@family.com",
+        label_visibility="collapsed"
+    )
+    if st.button("📩 Email Report to Caregiver", use_container_width=True):
+        if caregiver_email:
+            # Clean email validation check
+            if "@" in caregiver_email and "." in caregiver_email:
+                with st.spinner("Dispatching secure safety alert..."):
+                    # We will pass the text data to a backend handler function
+                    from guardian_bot import email_guardian_report
+
+                    # Capture the text response variable you used above
+                    # Note: Replace 'response' with whatever variable stores your AI text output
+                    success = email_guardian_report(caregiver_email, response)
+
+                    if success:
+                        st.success(f"✅ Safety protocol successfully dispatched to {caregiver_email}!")
+                    else:
+                        st.error("❌ Transmission deferred. Please try again or use the Print layout.")
+            else:
+                st.warning("⚠️ Please enter a valid email address structure.")
+        else:
+            st.warning("⚠️ Please input a caregiver email address first.")
+
 st.markdown("---")
 st.markdown(
     "<div style='text-align: center; color: #888888; font-size: 0.85rem; padding-top: 10px;'>"
