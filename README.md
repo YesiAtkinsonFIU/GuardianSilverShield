@@ -36,6 +36,9 @@ Guardian is built around five core engineering pillars to ensure absolute reliab
 * **Production Domain Mapping:** Transitioned from a default platform sandbox to a dedicated, branded web property at `guardiansilvershield.com`.
 * **Cryptographic Edge Redirection:** Deployed an automated, full-screen asset canvas frame leveraging Cloudflare's global edge network.
 * **Hardware Permissions Passthrough:** Implemented strict browser security access flags (`allow="camera; microphone;"`) directly within the routing container layer to ensure frictionless, cross-domain hardware handshake compliance for live scanning and voice recording.
+* **Database:** MongoDB Atlas
+* **Secure Mailer:** SMTP Secure TLS Subsystem
+
 ### 1. Multimodal Edge Ingestion Layer
 
 Seniors interact with scams across fragmented communication channels. Guardian removes mechanical friction by supporting parallel multi-class asset streaming:
@@ -92,6 +95,13 @@ The platform's security and failover architectures are programmatically validate
 | **PII Data Scrubbing** | Mask complex, mutated SSN/Phone/Email strings | 100% Extraction | `< 0.3 ms` (Deterministic Edge) |
 | **Failover Keyword Routing** | Execute local protocol fallback mapping under disconnection | 100% Match | `< 0.02 ms` (Offline Core) |
 | **Multi-Asset Sync** | Process composite Text + Multi-Image + Audio inputs | 100% Structural Sync | API Dependent |
+
+---
+
+### 👥 Caregiver Action Suite (New!)
+*   **Secure Email Dispatch:** Instantly routes fully redacted step-by-step safety alerts and action protocols directly to a caregiver or family member's email address.
+*   **Printable Physical Protocols:** Generates clean, physical printouts of action steps to keep next to the telephone or computer.
+*   **Session Telemetry:** Securely tracks active alerts and threat classifications using a robust backend MongoDB Atlas cloud database.
 
 ---
 
