@@ -1,0 +1,4 @@
+google-genai
+pymongo[srv]
+streamlit
+pillow-heif
