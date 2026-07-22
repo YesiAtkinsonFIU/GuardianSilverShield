@@ -163,54 +163,54 @@ def analyze_multimodal_message(user_text=None, uploaded_files=None, voice_audio=
     from email.mime.text import MIMEText
     from email.mime.multipart import MIMEMultipart
 
-    def email_guardian_report(recipient_email, report_text):
-        """
-        Transports fully redacted safety protocols securely to caregivers
-        utilizing corporate server credentials.
-        """
-        # Grab your environment variables (Set these up in your Streamlit Secrets Manager)
-        smtp_server = os.environ.get("SMTP_SERVER", "smtp.gmail.com")
-        smtp_port = int(os.environ.get("SMTP_PORT", 587))
-        sender_email = os.environ.get("SENDER_EMAIL")  # e.g., your corporate email
-        sender_password = os.environ.get("SENDER_PASSWORD")  # App Password token
+def email_guardian_report(recipient_email, report_text):
+    """
+    Transports fully redacted safety protocols securely to caregivers
+    utilizing corporate server credentials.
+    """
+    # Grab your environment variables (Set these up in your Streamlit Secrets Manager)
+    smtp_server = os.environ.get("SMTP_SERVER", "smtp.gmail.com")
+    smtp_port = int(os.environ.get("SMTP_PORT", 587))
+    sender_email = os.environ.get("SENDER_EMAIL")  # e.g., your corporate email
+    sender_password = os.environ.get("SENDER_PASSWORD")  # App Password token
 
-        if not sender_email or not sender_password:
-            print("⚠️ Outbound mail credentials missing from environment.")
-            return False
+    if not sender_email or not sender_password:
+        print("⚠️ Outbound mail credentials missing from environment.")
+        return False
 
-        try:
-            # Construct the email packet
-            msg = MIMEMultipart()
-            msg['From'] = f"Guardian: Silver Shield <{sender_email}>"
-            msg['To'] = recipient_email
-            msg['Subject'] = "🚨 Guardian Safety Alert: Fraud Protocol Action Required"
+    try:
+        # Construct the email packet
+        msg = MIMEMultipart()
+        msg['From'] = f"Guardian: Silver Shield <{sender_email}>"
+        msg['To'] = recipient_email
+        msg['Subject'] = "🚨 Guardian Safety Alert: Fraud Protocol Action Required"
 
-            # Body formatting designed for instant legibility
-            body = (
-                "Hello,\n\n"
-                "A member of your family or care circle recently scanned a potential threat "
-                "using Guardian: The Silver Shield. Below is the immediate, sanitized step-by-step "
-                "action protocol generated to keep them safe:\n\n"
-                "============================================================\n"
-                f"{report_text}\n"
-                "============================================================\n\n"
-                "Please reach out to them directly to provide reassurance and ensure no financial "
-                "or personal data assets have been compromised.\n\n"
-                "Sincerely,\n"
-                "Guardian Security Operations Engine\n"
-                "Managed by BYse Ventures LLC"
-            )
+        # Body formatting designed for instant legibility
+        body = (
+            "Hello,\n\n"
+            "A member of your family or care circle recently scanned a potential threat "
+            "using Guardian: The Silver Shield. Below is the immediate, sanitized step-by-step "
+            "action protocol generated to keep them safe:\n\n"
+            "============================================================\n"
+            f"{report_text}\n"
+            "============================================================\n\n"
+            "Please reach out to them directly to provide reassurance and ensure no financial "
+            "or personal data assets have been compromised.\n\n"
+            "Sincerely,\n"
+            "Guardian Security Operations Engine\n"
+            "Managed by BYse Ventures LLC"
+        )
 
-            msg.attach(MIMEText(body, 'plain'))
+        msg.attach(MIMEText(body, 'plain'))
 
-            # Secure TLS Transport Connection Execution
-            server = smtplib.SMTP(smtp_server, smtp_port)
-            server.starttls()
-            server.login(sender_email, sender_password)
-            server.sendmail(sender_email, recipient_email, msg.as_string())
-            server.quit()
+        # Secure TLS Transport Connection Execution
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()
+        server.login(sender_email, sender_password)
+        server.sendmail(sender_email, recipient_email, msg.as_string())
+        server.quit()
 
-            return True
-        except Exception as e:
-            print(f"❌ Transactional email dispatch failure: {e}")
-            return False
+        return True
+    except Exception as e:
+        print(f"❌ Transactional email dispatch failure: {e}")
+        return False
