@@ -1,6 +1,9 @@
 import os
 import re
 import io
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from google import genai
 from google.genai import types
 from pymongo import MongoClient
@@ -159,9 +162,6 @@ def analyze_multimodal_message(user_text=None, uploaded_files=None, voice_audio=
     except Exception as e:
         return f"❌ Analysis interrupted. Error: {e}"
 
-    import smtplib
-    from email.mime.text import MIMEText
-    from email.mime.multipart import MIMEMultipart
 
 def email_guardian_report(recipient_email, report_text):
     """
