@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import uuid
 from guardian_bot import analyze_multimodal_message, purge_session_from_db, email_guardian_report
 
@@ -156,21 +157,33 @@ st.write("Keep your loved ones or caregivers informed. Use the options below to 
 col1, col2 = st.columns(2)
 
 with col1:
-    # 🖨️ NATIVE PRINT BUTTON
-    st.markdown("""
-                <button onclick="window.print()" style="
-                    width: 100%;
-                    padding: 0.6rem 1rem;
-                    background-color: #f0f2f6;
-                    color: #31333F;
-                    border: 1px solid #d6d6d8;
-                    border-radius: 8px;
-                    font-weight: 600;
-                    cursor: pointer;
-                ">
-                    🖨️ Print Protocols / Save as PDF
-                </button>
-            """, unsafe_allow_html=True)
+    with col1:
+        # 🖨️ RELIABLE CLIENT-SIDE PRINT TRIGGER
+        components.html(
+            """
+            <button onclick="window.print()" style="
+                width: 100%;
+                height: 42px;
+                background-color: #f0f2f6;
+                color: #31333F;
+                border: 1px solid #d6d6d8;
+                border-radius: 8px;
+                font-weight: 600;
+                font-family: sans-serif;
+                font-size: 14px;
+                cursor: pointer;
+            ">
+                🖨️ Print Protocols / Save as PDF
+            </button>
+            <script>
+                // Target the parent browser window from inside the iframe
+                document.querySelector('button').onclick = function() {
+                    window.parent.print();
+                };
+            </script>
+            """,
+            height=50,
+        )
 
 with col2:
     # 📩 EMAIL SHARE INTERFACE
