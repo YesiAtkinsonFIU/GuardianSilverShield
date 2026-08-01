@@ -157,10 +157,20 @@ col1, col2 = st.columns(2)
 
 with col1:
     # 🖨️ NATIVE PRINT BUTTON
-    if st.button("🖨️ Print Protocols / Save as PDF", use_container_width=True):
-        # Injects a tiny automated snippet into the browser window to trigger the print modal
-        # ✅ Correct parameter
-        st.markdown("<script>window.print();</script>", unsafe_allow_html=True)
+    st.markdown("""
+                <button onclick="window.print()" style="
+                    width: 100%;
+                    padding: 0.6rem 1rem;
+                    background-color: #f0f2f6;
+                    color: #31333F;
+                    border: 1px solid #d6d6d8;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    cursor: pointer;
+                ">
+                    🖨️ Print Protocols / Save as PDF
+                </button>
+            """, unsafe_allow_html=True)
 
 with col2:
     # 📩 EMAIL SHARE INTERFACE
