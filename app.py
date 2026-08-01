@@ -132,6 +132,7 @@ if scan_clicked:
                 voice_audio=voice_audio,
                 session_id=st.session_state["user_session_id"]
             )
+            st.session_state["analysis_result"] = analysis_result
 
         if user_message.strip():
             st.markdown("### 🔒 Local Privacy Shield Active")
@@ -172,24 +173,24 @@ with col2:
     )
     if st.button("📩 Email Report to Caregiver", use_container_width=True):
         if caregiver_email:
-            # Clean email validation check
             if "@" in caregiver_email and "." in caregiver_email:
                 with st.spinner("Dispatching secure safety alert..."):
-                    # We will pass the text data to a backend handler function
                     from guardian_bot import email_guardian_report
 
-                    # Capture the text response variable you used above
-                    # Replace 'response' with the variable that holds your AI output text
-                    success = email_guardian_report(caregiver_email, analysis_result)
+                    # Fetch persistent result safely from session_state
+                    report_to_send = st.session_state.get("analysis_result", "")
 
-                    if success:
-                        st.success(f"✅ Safety protocol successfully dispatched to {caregiver_email}!")
+                    if report_to_send:
+                        success = email_guardian_report(caregiver_email, report_to_send)
+                        if success:
+                            st.success(f"✅ Safety protocol successfully dispatched to {caregiver_email}!")
+                        else:
+                            st.error(
+                                "❌ Transmission deferred. Please check server SMTP credentials in Streamlit Secrets.")
                     else:
-                        st.error("❌ Transmission deferred. Please try again or use the Print layout.")
+                        st.warning("⚠️ No active scan result found. Please run a scan first!")
             else:
                 st.warning("⚠️ Please enter a valid email address structure.")
-        else:
-            st.warning("⚠️ Please input a caregiver email address first.")
 
 st.markdown("---")
 st.markdown(
