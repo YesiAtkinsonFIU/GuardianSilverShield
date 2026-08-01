@@ -179,8 +179,8 @@ with col2:
                     from guardian_bot import email_guardian_report
 
                     # Capture the text response variable you used above
-                    # Note: Replace 'response' with whatever variable stores your AI text output
-                    success = email_guardian_report(caregiver_email, response)
+                    # Replace 'response' with the variable that holds your AI output text
+                    success = email_guardian_report(caregiver_email, analysis_result)
 
                     if success:
                         st.success(f"✅ Safety protocol successfully dispatched to {caregiver_email}!")
