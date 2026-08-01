@@ -1,6 +1,6 @@
 import streamlit as st
 import uuid
-from guardian_bot import analyze_multimodal_message, purge_session_from_db
+from guardian_bot import analyze_multimodal_message, purge_session_from_db, email_guardian_report
 
 # Configure the web browser tab title and layout
 st.set_page_config(
