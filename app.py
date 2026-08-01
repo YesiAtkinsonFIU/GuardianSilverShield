@@ -159,10 +159,8 @@ with col1:
     # 🖨️ NATIVE PRINT BUTTON
     if st.button("🖨️ Print Protocols / Save as PDF", use_container_width=True):
         # Injects a tiny automated snippet into the browser window to trigger the print modal
-        st.markdown(
-            "<script>window.print();</script>",
-            unsafe_allow_code=True
-        )
+        # ✅ Correct parameter
+        st.markdown("<script>window.print();</script>", unsafe_allow_html=True)
 
 with col2:
     # 📩 EMAIL SHARE INTERFACE
